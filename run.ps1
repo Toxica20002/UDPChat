@@ -12,3 +12,4 @@ for ($i = 0; $i -lt $numberOfUser; $i++) {
     }
 }
 
+#Get-Job | Stop-Job
