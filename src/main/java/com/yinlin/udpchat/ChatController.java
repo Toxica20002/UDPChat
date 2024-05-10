@@ -127,7 +127,7 @@ public class ChatController implements Initializable {
         try{
             socket = new DatagramSocket(port);
             textArea.appendText(">>> Client started on port " + port + "\n");
-            new Thread(() -> receiveFromServer()).start();
+            new Thread(this::receiveFromServer).start();
         } catch (Exception e) {
             e.printStackTrace();
         }
