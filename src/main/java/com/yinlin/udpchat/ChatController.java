@@ -1,6 +1,5 @@
 package com.yinlin.udpchat;
 
-import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.Button;
@@ -17,7 +16,6 @@ import java.util.ResourceBundle;
 public class ChatController implements Initializable {
 
     private DatagramSocket socket;
-    private byte[] buffer = new byte[1024];
     private String username;
 
     @FXML
@@ -41,13 +39,13 @@ public class ChatController implements Initializable {
     private void receiveFromServer() {
         try {
             while (true) {
+                byte[] buffer = new byte[1024];
                 DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
                 socket.receive(packet);
                 String received = new String(packet.getData(), 0, packet.getLength());
                 textArea.appendText(">>> " + received + "\n");
             }
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (Exception ignored) {
         }
     }
 
@@ -57,8 +55,7 @@ public class ChatController implements Initializable {
             int port = 1200;
             DatagramPacket packet = new DatagramPacket(message.getBytes(), message.getBytes().length, address, port);
             socket.send(packet);
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (Exception ignored) {
         }
     }
 
@@ -77,7 +74,7 @@ public class ChatController implements Initializable {
     }
 
     @FXML
-    void handleSendButton(ActionEvent event) {
+    void handleSendButton() {
         String recipient = recipientText.getText();
         String message = messageText.getText();
         if(recipient != null && !recipient.isEmpty() && message != null && !message.isEmpty()) {
@@ -92,7 +89,7 @@ public class ChatController implements Initializable {
     }
 
     @FXML
-    void handleEnterUsername(ActionEvent event) {
+    void handleEnterUsername() {
         username = usernameField.getText();
         if(username != null && !username.isEmpty()) {
             textArea.appendText(">>> Welcome, " + username + "!\n");
@@ -103,8 +100,7 @@ public class ChatController implements Initializable {
             usernameField.setDisable(true);
             try {
                 sendMessage(username);
-            }catch (Exception e) {
-                e.printStackTrace();
+            }catch (Exception ignored) {
             }
         }
         else{
@@ -128,8 +124,7 @@ public class ChatController implements Initializable {
             socket = new DatagramSocket(port);
             textArea.appendText(">>> Client started on port " + port + "\n");
             new Thread(this::receiveFromServer).start();
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (Exception ignored) {
         }
 
 
