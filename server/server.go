@@ -33,45 +33,52 @@ func handleClient(conn *net.UDPConn) {
 	}
 	message := string(buf[:n])
 	fmt.Println("Received: ", message)
+	//Print IP address of the client
+	fmt.Println("Client IP: ", addr.IP.String())
 	//fmt.Println("Received: ", message)
 	if strings.HasPrefix(message, "@") {
-		parts := strings.SplitN(message, " ", 3)
+		parts := strings.SplitN(message, " ", 4)
 		command := parts[0][1:] // remove the '@'
 		if len(parts) > 1 {
-			msg := parts[2]
+			msg := parts[3]
+			option := parts[2]
 			sender := parts[1]
 			if command == "all" {
-				for addr, client := range clients {
-					if client.Name == sender {
-						continue
-					}
-					msg = "(Public) " + sender + ": " + msg
-					clientAddr, _ := net.ResolveUDPAddr("udp", addr) // assuming clients are listening on port 1200
-					_, err := conn.WriteToUDP([]byte(msg), clientAddr)
-					if err != nil {
-						return 
-					}
-				}
-			} else {
-				msg = "(Private) " + sender + ": " + msg
-				name := command
-				name = strings.TrimSpace(name)
-				flag := false
-				for addr, client := range clients {
-					if client.Name == name {
+				if option == "message" {
+					for addr, client := range clients {
+						if client.Name == sender {
+							continue
+						}
+						msg = "(Public) " + sender + ": " + msg
 						clientAddr, _ := net.ResolveUDPAddr("udp", addr) // assuming clients are listening on port 1200
 						_, err := conn.WriteToUDP([]byte(msg), clientAddr)
 						if err != nil {
-							return 
+							return
 						}
-						flag = true
 					}
 				}
-				if !flag {
-					errMsg := "(Public) Server: The user " + command + " does not exist."
-					_, err := conn.WriteToUDP([]byte(errMsg), addr)
-					if err != nil {
-						return 
+			} else {
+				if option == "message" {
+					msg = "(Private) " + sender + ": " + msg
+					name := command
+					name = strings.TrimSpace(name)
+					flag := false
+					for addr, client := range clients {
+						if client.Name == name {
+							clientAddr, _ := net.ResolveUDPAddr("udp", addr) // assuming clients are listening on port 1200
+							_, err := conn.WriteToUDP([]byte(msg), clientAddr)
+							if err != nil {
+								return
+							}
+							flag = true
+						}
+					}
+					if !flag {
+						errMsg := "(Public) Server: The user " + command + " does not exist."
+						_, err := conn.WriteToUDP([]byte(errMsg), addr)
+						if err != nil {
+							return
+						}
 					}
 				}
 			}
@@ -88,7 +95,7 @@ func handleClient(conn *net.UDPConn) {
 			clientAddr, _ := net.ResolveUDPAddr("udp", addr) // assuming clients are listening on port 1200
 			_, err := conn.WriteToUDP([]byte(msg), clientAddr)
 			if err != nil {
-				return 
+				return
 			}
 		}
 		fmt.Println("User " + message + " has joined the chat.")
@@ -99,7 +106,7 @@ func checkError(err error) {
 	if err != nil {
 		_, err := fmt.Fprintf(os.Stderr, "Fatal error ", err.Error())
 		if err != nil {
-			return 
+			return
 		}
 		os.Exit(1)
 	}

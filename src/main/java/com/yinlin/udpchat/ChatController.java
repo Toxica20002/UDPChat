@@ -3,9 +3,13 @@ package com.yinlin.udpchat;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.Button;
+import javafx.scene.control.ChoiceBox;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
+import javafx.scene.text.Text;
+import javafx.stage.FileChooser;
 
+import java.io.File;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
@@ -17,6 +21,15 @@ public class ChatController implements Initializable {
 
     private DatagramSocket socket;
     private String username;
+
+    @FXML
+    private Button ChooseFileButton;
+
+    @FXML
+    private Text FileSize;
+
+    @FXML
+    private Text NameFile;
 
     @FXML
     private Button enterUsernameButton;
@@ -35,6 +48,15 @@ public class ChatController implements Initializable {
 
     @FXML
     private TextField usernameField;
+
+    @FXML
+    private Button uploadButton;
+
+    @FXML
+    private ChoiceBox<String> fileDownloadChoiceBox;
+
+    @FXML
+    private Button downloadButton;
 
     private void receiveFromServer() {
         try {
@@ -78,7 +100,7 @@ public class ChatController implements Initializable {
         String recipient = recipientText.getText();
         String message = messageText.getText();
         if(recipient != null && !recipient.isEmpty() && message != null && !message.isEmpty()) {
-            sendMessage(recipient + " " +  username + " " + message);
+            sendMessage(recipient + " " +  username + " message " + message);
             textArea.appendText(">>> " + username + " to " + recipient + ": " + message + "\n");
             recipientText.clear();
             messageText.clear();
@@ -105,6 +127,42 @@ public class ChatController implements Initializable {
         }
         else{
             textArea.appendText(">>> Please enter a valid username\n");
+        }
+    }
+
+    @FXML
+    void handleChooseFileButton() {
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("Open Resource File");
+//        fileChooser.showOpenDialog(ChooseFileButton.getScene().getWindow());
+
+        File file = fileChooser.showOpenDialog(ChooseFileButton.getScene().getWindow());
+        if (file != null) {
+            NameFile.setText(file.getName());
+            FileSize.setText(file.length() + " bytes");
+        }
+    }
+
+    @FXML
+    void handleDownloadButton() {
+
+    }
+
+    @FXML
+    void handleUploadButton() {
+        String fileName = NameFile.getText();
+        String recipient = recipientText.getText();
+        String fileSize = FileSize.getText();
+        String IP_Address = "localhost";
+        if(recipient != null && !recipient.isEmpty() && fileName != null && !fileName.isEmpty()) {
+            sendMessage(recipient + " " +  username + " file " + fileName + " " + fileSize + " from "  );
+            textArea.appendText(">>> " + username + " to " + recipient + ": " + fileName + "\n");
+            recipientText.clear();
+            NameFile.setText("");
+            FileSize.setText("");
+        }
+        else{
+            textArea.appendText(">>> Please enter a valid recipient and file\n");
         }
     }
 
