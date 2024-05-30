@@ -9,16 +9,13 @@ import javafx.scene.control.TextField;
 import javafx.scene.text.Text;
 import javafx.stage.FileChooser;
 
-import java.io.IOException;
-import java.io.PrintWriter;
+import java.io.*;
 import java.net.*;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Random;
 import java.util.ResourceBundle;
-import java.io.File;
-
 
 
 public class ChatController implements Initializable {
@@ -66,6 +63,8 @@ public class ChatController implements Initializable {
     private ArrayList<ServerFile> sharingFiles = new ArrayList<>();
     private String sourceFile;
     private int port;
+    private  DataOutputStream dataOutputStream = null;
+    private  DataInputStream dataInputStream = null;
 
     private void TCPServer()  {
         try{
@@ -74,8 +73,7 @@ public class ChatController implements Initializable {
                 Socket clientSocket = serverSocket.accept();
                 ServerProcess serverProcess = new ServerProcess(clientSocket, username);
                 serverProcess.start();
-                ClientProcess clientProcess = new ClientProcess(clientSocket, username);
-                clientProcess.start();
+
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -151,9 +149,13 @@ public class ChatController implements Initializable {
     @FXML
     void handleEnterUsername() {
         username = usernameField.getText();
-        File directory = new File("./user/" + username);
+        File directory = new File("./user");
         if (! directory.exists()){
             directory.mkdir();
+        }
+        File directory1 = new File("./user/" + username);
+        if (! directory1.exists()){
+            directory1.mkdir();
         }
         File directory2 = new File("./user/" + username + "/download");
         if (! directory2.exists()){
@@ -200,11 +202,41 @@ public class ChatController implements Initializable {
             Socket socket = new Socket(IP, port);
             PrintWriter writer = new PrintWriter(socket.getOutputStream(), true);
             writer.println(message);
-            writer.close();
+            writer.flush();
+            dataInputStream = new DataInputStream(socket.getInputStream());
+            dataOutputStream = new DataOutputStream(socket.getOutputStream());
+            receiveFile("./user/" + username + "/download/" + message);
             socket.close();
+            dataInputStream.close();
+            dataOutputStream.close();
+
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    private void receiveFile(String fileName)
+            throws Exception
+    {
+        int bytes = 0;
+        FileOutputStream fileOutputStream
+                = new FileOutputStream(fileName);
+
+        long size
+                = dataInputStream.readLong(); // read file size
+        byte[] buffer = new byte[4 * 1024];
+        while (size > 0
+                && (bytes = dataInputStream.read(
+                buffer, 0,
+                (int)Math.min(buffer.length, size)))
+                != -1) {
+            // Here we write the file using write method
+            fileOutputStream.write(buffer, 0, bytes);
+            size -= bytes; // read upto file size
+        }
+        // Here we received file
+        System.out.println("File is Received");
+        fileOutputStream.close();
     }
 
     @FXML
@@ -217,9 +249,9 @@ public class ChatController implements Initializable {
                 if(file.getFileName().equals(fileName)){
 //                    sendMessage(recipient + " " + username + " download " + file.getFileIP() + " " + file.getFilePort() + " " + fileName);
                     sendMessageTCP(fileName, file.getFileIP(), file.getFilePort());
+                    //receiveMessageTCP(file.getFileIP(), file.getFilePort());
 
                     textArea.appendText(">>> " + username + " want to download file " + fileName + "\n");
-                    fileDownloadChoiceBox.getItems().remove(fileName);
                     break;
                 }
             }

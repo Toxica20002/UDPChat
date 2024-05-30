@@ -54,7 +54,7 @@ func handleClient(conn *net.UDPConn) {
 						if client.Name == sender {
 							continue
 						}
-						msg = "file (Public) " + sender + ": " + msg
+						msg = "message (Public) " + sender + ": " + msg
 						clientAddr, _ := net.ResolveUDPAddr("udp", addr) // assuming clients are listening on port 1200
 						_, err := conn.WriteToUDP([]byte(msg), clientAddr)
 						if err != nil {
@@ -108,25 +108,25 @@ func handleClient(conn *net.UDPConn) {
 						}
 					}
 				} else if option == "file" {
-					msg = "file (Private) " + sender + " want to share " + msg
 					name := command
 					name = strings.TrimSpace(name)
-					flag := false
 					for addr, client := range clients {
 						if client.Name == name {
+							fileInfo := strings.SplitN(msg, " ", 2)
+							fmt.Println(fileInfo[0] + " " + fileInfo[1])
+							msg = "message (Private) " + sender + " want to share " + fileInfo[1] + " with size " + fileInfo[0] + " bytes"
 							clientAddr, _ := net.ResolveUDPAddr("udp", addr) // assuming clients are listening on port 1200
 							_, err := conn.WriteToUDP([]byte(msg), clientAddr)
 							if err != nil {
 								return
 							}
-							flag = true
-						}
-					}
-					if !flag {
-						errMsg := "(Public) Server: The user " + command + " does not exist."
-						_, err := conn.WriteToUDP([]byte(errMsg), addr)
-						if err != nil {
-							return
+
+							msg = "file " + ClientIP + " " + strconv.Itoa(ClientPort) + " " + fileInfo[0] + " " + fileInfo[1]
+							clientAddr, _ = net.ResolveUDPAddr("udp", addr) // assuming clients are listening on port 1200
+							_, err = conn.WriteToUDP([]byte(msg), clientAddr)
+							if err != nil {
+								return
+							}
 						}
 					}
 				}
